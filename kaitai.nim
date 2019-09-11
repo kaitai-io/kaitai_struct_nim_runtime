@@ -1,8 +1,7 @@
 import streams, endians, sequtils, bitops
 
 type
-  KaitaiStream* = ref KaitaiStreamObj
-  KaitaiStreamObj* = object
+  KaitaiStream* = ref object
     io*: FileStream
     bits*: uint64
     bitsLeft*: int
