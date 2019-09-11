@@ -7,6 +7,11 @@ type
     bits*: uint64
     bitsLeft*: int
 
+proc newKaitaiStream*(f: File): owned KaitaiStream =
+  KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
+proc newKaitaiStream*(filename: string): owned KaitaiStream =
+  KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
+
 # Stream positioning
 proc eof*(ks: KaitaiStream): bool = atEnd(ks.io)
 proc seek*(ks: KaitaiStream, n: int) = setPosition(ks.io, n)
