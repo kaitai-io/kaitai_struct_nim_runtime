@@ -1,4 +1,4 @@
-import streams, endians, sequtils, bitops
+import streams, endians, sequtils, bitops, strutils
 
 type
   KaitaiStream* = ref object
@@ -285,3 +285,10 @@ proc process_rotate_left*(data: seq[byte], amount: int): seq[byte] =
   result = data.mapIt(rotateLeftBits(it, amount))
 
 # XXX: proc process_zlib(data: seq[byte]): seq[byte] =
+
+proc parseInt*(s: string, radix: range[2..16]): int =
+  case radix
+  of 2: parseBinInt(s)
+  of 8: parseOctInt(s)
+  of 16: parseHexInt(s)
+  else: parseInt(s)
