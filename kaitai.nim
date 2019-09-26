@@ -1,4 +1,4 @@
-import streams, endians, sequtils, bitops, strutils
+import streams, endians, sequtils, bitops, strutils, strformat
 
 type
   KaitaiStream* = ref object
@@ -286,9 +286,12 @@ proc process_rotate_left*(data: seq[byte], amount: int): seq[byte] =
 
 # XXX: proc process_zlib(data: seq[byte]): seq[byte] =
 
-proc parseInt*(s: string, radix: range[2..16]): int =
+proc parseInt*(s: string, radix: int): int {.raises: [ValueError].} =
   case radix
   of 2: parseBinInt(s)
   of 8: parseOctInt(s)
+  of 10: parseInt(s)
   of 16: parseHexInt(s)
-  else: parseInt(s)
+  else:
+    raise newException(ValueError,
+      fmt"base {radix} is not supported; use base 2, 8, 10 or 16")
