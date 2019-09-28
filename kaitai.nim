@@ -12,6 +12,7 @@ proc newKaitaiStream*(filename: string): owned KaitaiStream =
   KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
 
 # Stream positioning
+proc close*(ks: KaitaiStream) = close(ks.io)
 proc eof*(ks: KaitaiStream): bool = atEnd(ks.io)
 proc seek*(ks: KaitaiStream, n: int) = setPosition(ks.io, n)
 proc pos*(ks: KaitaiStream): int = getPosition(ks.io)
@@ -207,21 +208,8 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
 
 # Byte arrays
 proc read_bytes*(ks: KaitaiStream, n: int): seq[byte] =
-  const bufferSize = 1024
-  var
-    bytesLeft = n
-    buffer {.noinit.}: array[bufferSize, char]
-    currIdx: int
   result = newSeq[byte](n)
-  while bytesLeft > 0:
-    var bytesRead: int
-    if bytesLeft > bufferSize:
-      bytesRead = ks.io.readData(addr(buffer[0]), bufferSize)
-    else:
-      bytesRead = ks.io.readData(addr(buffer[0]), bytesLeft)
-    copyMem(addr(result[currIdx]), addr(buffer[0]), bytesRead)
-    inc(currIdx, bytesRead)
-    dec(bytesLeft, bytesRead)
+  doAssert ks.io.readData(addr(result[0]), n) == n
 
 proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
   const bufferSize = 1024
