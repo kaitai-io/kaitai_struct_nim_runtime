@@ -2,7 +2,7 @@ import streams, endians, sequtils, bitops, strutils, strformat
 
 type
   KaitaiStream* = ref object
-    io*: FileStream
+    io*: Stream
     bits*: uint64
     bitsLeft*: int
 
@@ -10,12 +10,15 @@ proc newKaitaiStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
 proc newKaitaiStream*(filename: string): owned KaitaiStream =
   KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
+proc newKaitaiStream*(data: seq[byte]): owned KaitaiStream =
+  KaitaiStream(io: newStringStream(join(data)), bits: 0, bitsLeft: 0)
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
 proc eof*(ks: KaitaiStream): bool = atEnd(ks.io)
 proc seek*(ks: KaitaiStream, n: int) = setPosition(ks.io, n)
 proc pos*(ks: KaitaiStream): int = getPosition(ks.io)
+proc skip*(ks: KaitaiStream, n: int) = ks.seek(pos(ks) + n)
 proc size*(ks: KaitaiStream): int =
   let p = getPosition(ks.io)
   result = readAll(ks.io).len
@@ -283,3 +286,10 @@ proc parseInt*(s: string, radix: int): int {.raises: [ValueError].} =
   else:
     raise newException(ValueError,
       fmt"base {radix} is not supported; use base 2, 8, 10 or 16")
+
+proc `%%%`*[T, U: SomeInteger](a: T, b: U): U =
+  if a >= T(0):
+    result = a.U mod b;
+  else:
+    let x = if b >= U(0): b else: -b
+    result = x - 1 + U(a + 1) mod b;
