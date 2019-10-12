@@ -185,7 +185,9 @@ else:
   proc read_f8le*(ks: KaitaiStream): float64 = readFloat64(ks.io)
 
 # Unaligned bit values
-proc align_to_byte*(ks: KaitaiStream) = ks.bitsLeft = 0
+proc align_to_byte*(ks: KaitaiStream) =
+  ks.bits = 0
+  ks.bitsLeft = 0
 
 proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
   proc getMaskOnes(n: int): uint64 =
@@ -210,8 +212,8 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
 # XXX: proc read_bits_array*(ks: KaitaiStream, n: int): seq[byte] =
 
 # Byte arrays
-proc read_bytes*(ks: KaitaiStream, n: int): seq[byte] =
-  result = newSeq[byte](n)
+proc read_bytes*(ks: KaitaiStream, n: int): seq[int8] =
+  result = newSeq[int8](n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
 proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
@@ -238,7 +240,7 @@ proc read_bytes_term*(ks: KaitaiStream; term: byte;
       break
     result.add(c)
 
-proc ensure_fixed_contents*(ks: KaitaiStream, expected: seq[byte]): seq[byte] =
+proc ensure_fixed_contents*(ks: KaitaiStream, expected: seq[int8]): seq[int8] =
   result = ks.read_bytes(expected.len)
   if result != expected:
     raise newException(AssertionError, "the request to the OS failed")
