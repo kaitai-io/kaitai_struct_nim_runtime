@@ -212,11 +212,11 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
 # XXX: proc read_bits_array*(ks: KaitaiStream, n: int): seq[byte] =
 
 # Byte arrays
-proc read_bytes*(ks: KaitaiStream, n: int): seq[byte] =
-  result = newSeq[byte](n)
+proc read_bytes*(ks: KaitaiStream, n: int): string =
+  result = newString(n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
-proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
+proc read_bytes_full*(ks: KaitaiStream): string =
   const bufferSize = 1024
   var buffer {.noinit.}: array[bufferSize, char]
   while true:
@@ -240,7 +240,7 @@ proc read_bytes_term*(ks: KaitaiStream; term: byte;
       break
     result.add(c)
 
-proc ensure_fixed_contents*(ks: KaitaiStream, expected: seq[byte]): seq[byte] =
+proc ensure_fixed_contents*(ks: KaitaiStream, expected: string): string =
   result = ks.read_bytes(expected.len)
   if result != expected:
     raise newException(AssertionError, "the request to the OS failed")
