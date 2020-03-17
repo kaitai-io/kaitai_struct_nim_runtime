@@ -212,11 +212,11 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
 # XXX: proc read_bits_array*(ks: KaitaiStream, n: int): seq[byte] =
 
 # Byte arrays
-proc read_bytes*(ks: KaitaiStream, n: int): string =
-  result = newString(n)
+proc read_bytes*(ks: KaitaiStream, n: int): seq[byte] =
+  result = newSeqOfCap[byte](n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
-proc read_bytes_full*(ks: KaitaiStream): string =
+proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
   const bufferSize = 1024
   var buffer {.noinit.}: array[bufferSize, char]
   while true:
