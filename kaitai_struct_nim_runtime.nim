@@ -213,7 +213,7 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
 
 # Byte arrays
 proc read_bytes*(ks: KaitaiStream, n: int): seq[byte] =
-  result = newSeqOfCap[byte](n)
+  result = newSeq[byte](n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
 proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
