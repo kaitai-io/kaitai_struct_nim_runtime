@@ -240,7 +240,7 @@ proc read_bytes_term*(ks: KaitaiStream; term: byte;
       break
     result.add(c)
 
-proc ensure_fixed_contents*(ks: KaitaiStream, expected: string): string =
+proc ensure_fixed_contents*(ks: KaitaiStream, expected: seq[byte]): seq[byte] =
   result = ks.read_bytes(expected.len)
   if result != expected:
     raise newException(AssertionError, "the request to the OS failed")
