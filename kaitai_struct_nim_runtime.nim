@@ -6,12 +6,12 @@ type
     bits*: uint64
     bitsLeft*: int
 
-proc newKaitaiStream*(f: File): owned KaitaiStream =
+proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
-proc newKaitaiStream*(filename: string): owned KaitaiStream =
+proc newKaitaiFileStream*(filename: string): owned KaitaiStream =
   KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
-proc newKaitaiStream*(data: seq[byte]): owned KaitaiStream =
-  KaitaiStream(io: newStringStream(join(data)), bits: 0, bitsLeft: 0)
+proc newKaitaiStringStream*(data: string): owned KaitaiStream =
+  KaitaiStream(io: newStringStream(data), bits: 0, bitsLeft: 0)
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
@@ -209,14 +209,14 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
   dec(ks.bitsLeft, n)
   ks.bits = ks.bits and getMaskOnes(ks.bitsLeft)
 
-# XXX: proc read_bits_array*(ks: KaitaiStream, n: int): seq[byte] =
+# XXX: proc read_bits_array*(ks: KaitaiStream, n: int): string =
 
 # Byte arrays
-proc read_bytes*(ks: KaitaiStream, n: int): seq[byte] =
-  result = newSeq[byte](n)
+proc read_bytes*(ks: KaitaiStream, n: int): string =
+  result = newString(n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
-proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
+proc read_bytes_full*(ks: KaitaiStream): string =
   const bufferSize = 1024
   var buffer {.noinit.}: array[bufferSize, char]
   while true:
@@ -229,18 +229,18 @@ proc read_bytes_full*(ks: KaitaiStream): seq[byte] =
       break
 
 proc read_bytes_term*(ks: KaitaiStream; term: byte;
-                      includeTerm, consumeTerm: bool): seq[byte] =
+                      includeTerm, consumeTerm: bool): string =
   while true:
     let c = readUint8(ks.io)
     if c == term:
       if includeTerm:
-        result.add(term)
+        result.add(term.char)
       if not consumeTerm:
         ks.io.setPosition(ks.io.getPosition - 1)
       break
-    result.add(c)
+    result.add(c.char)
 
-proc ensure_fixed_contents*(ks: KaitaiStream, expected: seq[byte]): seq[byte] =
+proc ensure_fixed_contents*(ks: KaitaiStream, expected: string): string =
   result = ks.read_bytes(expected.len)
   if result != expected:
     raise newException(AssertionError, "the request to the OS failed")
