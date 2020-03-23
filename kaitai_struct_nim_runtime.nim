@@ -5,6 +5,7 @@ type
     io*: Stream
     bits*: uint64
     bitsLeft*: int
+  KaitaiError* = object of Exception
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
