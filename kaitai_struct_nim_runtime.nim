@@ -1,4 +1,4 @@
-import streams, endians, sequtils, bitops, strutils, strformat
+import streams, endians, sequtils, bitops, strutils, strformat, options
 
 type
   KaitaiStream* = ref object
@@ -6,6 +6,9 @@ type
     bits*: uint64
     bitsLeft*: int
   KaitaiError* = object of Exception
+
+converter toInt*(n: uint8): int = n.int
+converter toIntOption*(n: Option[uint8]): Option[int] = some(get(n).int)
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
