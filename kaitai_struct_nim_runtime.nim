@@ -7,8 +7,17 @@ type
     bitsLeft*: int
   KaitaiError* = object of Exception
 
-converter toInt*(n: uint8): int = n.int
+converter toString(bytes: seq[byte]): string =
+  result = newStringOfCap(len(bytes))
+  for b in bytes:
+    add(result, char(b))
+converter toString(str: seq[char]): string =
+  result = newStringOfCap(len(str))
+  for c in str:
+    add(result, c)
 converter toIntOption*(n: Option[uint8]): Option[int] = some(get(n).int)
+converter toUint8Option*(n: Option[int]): Option[uint8] = some(get(n).uint8)
+converter toInt8Option*(n: Option[int]): Option[int8] = some(get(n).int8)
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
@@ -29,14 +38,14 @@ proc size*(ks: KaitaiStream): int =
   setPosition(ks.io, p)
 
 # Signed integer numbers
-proc read_s1*(ks: KaitaiStream): int8 = readInt8(ks.io)
+proc readS1*(ks: KaitaiStream): int8 = readInt8(ks.io)
 
 when system.cpuEndian == bigEndian:
-  proc read_s2be*(ks: KaitaiStream): int16 = readInt16(ks.io)
-  proc read_s4be*(ks: KaitaiStream): int32 = readInt32(ks.io)
-  proc read_s8be*(ks: KaitaiStream): int64 = readInt64(ks.io)
+  proc readS2Be*(ks: KaitaiStream): int16 = readInt16(ks.io)
+  proc readS4Be*(ks: KaitaiStream): int32 = readInt32(ks.io)
+  proc readS8Be*(ks: KaitaiStream): int64 = readInt64(ks.io)
 
-  proc read_s2le*(ks: KaitaiStream): int16 =
+  proc readS2Le*(ks: KaitaiStream): int16 =
     var
       bufferIn: array[2, byte]
       bufferOut: array[2, byte]
@@ -44,7 +53,7 @@ when system.cpuEndian == bigEndian:
     swapEndian16(addr(bufferOut), addr(bufferIn))
     result = cast[int16](bufferOut)
 
-  proc read_s4le*(ks: KaitaiStream): int32 =
+  proc readS4Le*(ks: KaitaiStream): int32 =
     var
       bufferIn: array[4, byte]
       bufferOut: array[4, byte]
@@ -52,7 +61,7 @@ when system.cpuEndian == bigEndian:
     swapEndian32(addr(bufferOut), addr(bufferIn))
     result = cast[int32](bufferOut)
 
-  proc read_s8le*(ks: KaitaiStream): int64 =
+  proc readS8Le*(ks: KaitaiStream): int64 =
     var
       bufferIn: array[8, byte]
       bufferOut: array[8, byte]
@@ -60,7 +69,7 @@ when system.cpuEndian == bigEndian:
     swapEndian64(addr(bufferOut), addr(bufferIn))
     result = cast[int64](bufferOut)
 else:
-  proc read_s2be*(ks: KaitaiStream): int16 =
+  proc readS2Be*(ks: KaitaiStream): int16 =
     var
       bufferIn: array[2, byte]
       bufferOut: array[2, byte]
@@ -68,7 +77,7 @@ else:
     swapEndian16(addr(bufferOut), addr(bufferIn))
     result = cast[int16](bufferOut)
 
-  proc read_s4be*(ks: KaitaiStream): int32 =
+  proc readS4Be*(ks: KaitaiStream): int32 =
     var
       bufferIn: array[4, byte]
       bufferOut: array[4, byte]
@@ -76,7 +85,7 @@ else:
     swapEndian32(addr(bufferOut), addr(bufferIn))
     result = cast[int32](bufferOut)
 
-  proc read_s8be*(ks: KaitaiStream): int64 =
+  proc readS8Be*(ks: KaitaiStream): int64 =
     var
       bufferIn: array[8, byte]
       bufferOut: array[8, byte]
@@ -84,19 +93,19 @@ else:
     swapEndian64(addr(bufferOut), addr(bufferIn))
     result = cast[int64](bufferOut)
 
-  proc read_s2le*(ks: KaitaiStream): int16 = readInt16(ks.io)
-  proc read_s4le*(ks: KaitaiStream): int32 = readInt32(ks.io)
-  proc read_s8le*(ks: KaitaiStream): int64 = readInt64(ks.io)
+  proc readS2Le*(ks: KaitaiStream): int16 = readInt16(ks.io)
+  proc readS4Le*(ks: KaitaiStream): int32 = readInt32(ks.io)
+  proc readS8Le*(ks: KaitaiStream): int64 = readInt64(ks.io)
 
 # Unsigned integer numbers
-proc read_u1*(ks: KaitaiStream): uint8 = readUint8(ks.io)
+proc readU1*(ks: KaitaiStream): uint8 = readUint8(ks.io)
 
 when system.cpuEndian == bigEndian:
-  proc read_u2be*(ks: KaitaiStream): uint16 = readUint16(ks.io)
-  proc read_u4be*(ks: KaitaiStream): uint32 = readUint32(ks.io)
-  proc read_u8be*(ks: KaitaiStream): uint64 = readUint64(ks.io)
+  proc readU2Be*(ks: KaitaiStream): uint16 = readUint16(ks.io)
+  proc readU4Be*(ks: KaitaiStream): uint32 = readUint32(ks.io)
+  proc readU8Be*(ks: KaitaiStream): uint64 = readUint64(ks.io)
 
-  proc read_u2le*(ks: KaitaiStream): uint16 =
+  proc readU2Le*(ks: KaitaiStream): uint16 =
     var
       bufferIn: array[2, byte]
       bufferOut: array[2, byte]
@@ -104,7 +113,7 @@ when system.cpuEndian == bigEndian:
     swapEndian16(addr(bufferOut), addr(bufferIn))
     result = cast[uint16](bufferOut)
 
-  proc read_u4le*(ks: KaitaiStream): uint32 =
+  proc readU4Le*(ks: KaitaiStream): uint32 =
     var
       bufferIn: array[4, byte]
       bufferOut: array[4, byte]
@@ -112,7 +121,7 @@ when system.cpuEndian == bigEndian:
     swapEndian32(addr(bufferOut), addr(bufferIn))
     result = cast[uint32](bufferOut)
 
-  proc read_u8le*(ks: KaitaiStream): uint64 =
+  proc readU8Le*(ks: KaitaiStream): uint64 =
     var
       bufferIn: array[8, byte]
       bufferOut: array[8, byte]
@@ -120,7 +129,7 @@ when system.cpuEndian == bigEndian:
     swapEndian64(addr(bufferOut), addr(bufferIn))
     result = cast[uint64](bufferOut)
 else:
-  proc read_u2be*(ks: KaitaiStream): uint16 =
+  proc readU2Be*(ks: KaitaiStream): uint16 =
     var
       bufferIn: array[2, byte]
       bufferOut: array[2, byte]
@@ -128,7 +137,7 @@ else:
     swapEndian16(addr(bufferOut), addr(bufferIn))
     result = cast[uint16](bufferOut)
 
-  proc read_u4be*(ks: KaitaiStream): uint32 =
+  proc readU4Be*(ks: KaitaiStream): uint32 =
     var
       bufferIn: array[4, byte]
       bufferOut: array[4, byte]
@@ -136,7 +145,7 @@ else:
     swapEndian32(addr(bufferOut), addr(bufferIn))
     result = cast[uint32](bufferOut)
 
-  proc read_u8be*(ks: KaitaiStream): uint64 =
+  proc readU8Be*(ks: KaitaiStream): uint64 =
     var
       bufferIn: array[8, byte]
       bufferOut: array[8, byte]
@@ -144,16 +153,16 @@ else:
     swapEndian64(addr(bufferOut), addr(bufferIn))
     result = cast[uint64](bufferOut)
 
-  proc read_u2le*(ks: KaitaiStream): uint16 = readUint16(ks.io)
-  proc read_u4le*(ks: KaitaiStream): uint32 = readUint32(ks.io)
-  proc read_u8le*(ks: KaitaiStream): uint64 = readUint64(ks.io)
+  proc readU2Le*(ks: KaitaiStream): uint16 = readUint16(ks.io)
+  proc readU4Le*(ks: KaitaiStream): uint32 = readUint32(ks.io)
+  proc readU8Le*(ks: KaitaiStream): uint64 = readUint64(ks.io)
 
 # Floating point numbers
 when system.cpuEndian == bigEndian:
-  proc read_f4be*(ks: KaitaiStream): float32 = readFloat32(ks.io)
-  proc read_f8be*(ks: KaitaiStream): float64 = readFloat64(ks.io)
+  proc readF4Be*(ks: KaitaiStream): float32 = readFloat32(ks.io)
+  proc readF8Be*(ks: KaitaiStream): float64 = readFloat64(ks.io)
 
-  proc read_f4le*(ks: KaitaiStream): float32 =
+  proc readF4Le*(ks: KaitaiStream): float32 =
     var
       bufferIn: array[4, byte]
       bufferOut: array[4, byte]
@@ -161,7 +170,7 @@ when system.cpuEndian == bigEndian:
     swapEndian32(addr(bufferOut), addr(bufferIn))
     result = cast[float32](bufferOut)
 
-  proc read_f8le*(ks: KaitaiStream): float64 =
+  proc readF8Le*(ks: KaitaiStream): float64 =
     var
       bufferIn: array[8, byte]
       bufferOut: array[8, byte]
@@ -169,7 +178,7 @@ when system.cpuEndian == bigEndian:
     swapEndian64(addr(bufferOut), addr(bufferIn))
     result = cast[float64](bufferOut)
 else:
-  proc read_f4be*(ks: KaitaiStream): float32 =
+  proc readF4Be*(ks: KaitaiStream): float32 =
     var
       bufferIn: array[4, byte]
       bufferOut: array[4, byte]
@@ -177,7 +186,7 @@ else:
     swapEndian32(addr(bufferOut), addr(bufferIn))
     result = cast[float32](bufferOut)
 
-  proc read_f8be*(ks: KaitaiStream): float64 =
+  proc readF8Be*(ks: KaitaiStream): float64 =
     var
       bufferIn: array[8, byte]
       bufferOut: array[8, byte]
@@ -185,15 +194,15 @@ else:
     swapEndian64(addr(bufferOut), addr(bufferIn))
     result = cast[float64](bufferOut)
 
-  proc read_f4le*(ks: KaitaiStream): float32 = readFloat32(ks.io)
-  proc read_f8le*(ks: KaitaiStream): float64 = readFloat64(ks.io)
+  proc readF4Le*(ks: KaitaiStream): float32 = readFloat32(ks.io)
+  proc readF8Le*(ks: KaitaiStream): float64 = readFloat64(ks.io)
 
 # Unaligned bit values
 proc align_to_byte*(ks: KaitaiStream) =
   ks.bits = 0
   ks.bitsLeft = 0
 
-proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
+proc readBitsInt*(ks: KaitaiStream, n: int): uint64 =
   proc getMaskOnes(n: int): uint64 =
     if n == 64: 0xFFFFFFFFFFFFFFFF'u64
     else: (1'u64 shl n) - 1
@@ -213,14 +222,14 @@ proc read_bits_int*(ks: KaitaiStream, n: int): uint64 =
   dec(ks.bitsLeft, n)
   ks.bits = ks.bits and getMaskOnes(ks.bitsLeft)
 
-# XXX: proc read_bits_array*(ks: KaitaiStream, n: int): string =
+# XXX: proc readBitsArray*(ks: KaitaiStream, n: int): string =
 
 # Byte arrays
-proc read_bytes*(ks: KaitaiStream, n: int): string =
+proc readBytes*(ks: KaitaiStream, n: int): string =
   result = newString(n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
-proc read_bytes_full*(ks: KaitaiStream): string =
+proc readBytesFull*(ks: KaitaiStream): string =
   const bufferSize = 1024
   var buffer {.noinit.}: array[bufferSize, char]
   while true:
@@ -232,7 +241,7 @@ proc read_bytes_full*(ks: KaitaiStream): string =
     if bytesRead < bufferSize:
       break
 
-proc read_bytes_term*(ks: KaitaiStream; term: byte;
+proc readBytesTerm*(ks: KaitaiStream; term: byte;
                       includeTerm, consumeTerm: bool): string =
   while true:
     let c = readUint8(ks.io)
@@ -244,44 +253,43 @@ proc read_bytes_term*(ks: KaitaiStream; term: byte;
       break
     result.add(c.char)
 
-proc ensure_fixed_contents*(ks: KaitaiStream, expected: string): string =
+proc ensureFixedContents*(ks: KaitaiStream, expected: string): string =
   result = ks.read_bytes(expected.len)
   if result != expected:
     raise newException(AssertionError, "the request to the OS failed")
 
-proc bytes_strip_right*(bytes: seq[byte], padByte: byte): seq[byte] =
+proc bytesStripRight*(bytes: string, padByte: byte): string =
   var newLen = bytes.len
-  while newLen > 0 and bytes[newLen - 1] == padByte: dec(newLen)
+  while newLen > 0 and bytes[newLen - 1].byte == padByte: dec(newLen)
   result = bytes
   result.setLen(newLen)
 
-proc bytes_terminate*(bytes: seq[byte],
-                      term: byte, includeTerm: bool): seq[byte] =
+proc bytesTerminate*(bytes: string, term: byte, includeTerm: bool): string =
   var newLen: int
   let maxLen = bytes.len
-  while newLen < maxLen and bytes[newLen] != term: inc(newLen)
+  while newLen < maxLen and bytes[newLen].byte != term: inc(newLen)
   if includeTerm and newLen < maxLen: inc(newLen)
   result = bytes
   result.setLen(newLen)
 
-# XXX: proc bytes_to_str(bytes: seq[byte], encoding: string): string =
+# XXX: proc bytesToStr(bytes: string, encoding: string): string =
 
 # Byte array processing
-proc process_xor*(data: seq[byte], key: byte): seq[byte] =
-  result = data.mapIt(it xor key)
+proc processXor*(data: string, key: byte): string =
+  result = data.mapIt(it.byte xor key)
 
-proc process_xor*(data, key: seq[byte]): seq[byte] =
-  result = newSeq[byte](data.len)
+proc processXor*(data, key: string): string =
+  result = newString(data.len)
   var currKeyIdx: int
   for i in 0..<data.len:
-    result[i] = data[i] xor key[currKeyIdx]
+    result[i] = char(data[i].byte xor key[currKeyIdx].byte)
     inc currKeyIdx
     if currKeyIdx >= key.len: currKeyIdx = 0
 
-proc process_rotate_left*(data: seq[byte], amount: int): seq[byte] =
-  result = data.mapIt(rotateLeftBits(it, amount))
+proc processRotateLeft*(data: string, amount: int): string =
+  result = data.mapIt(rotateLeftBits(it.byte, amount.byte))
 
-# XXX: proc process_zlib(data: seq[byte]): seq[byte] =
+# XXX: proc process_zlib(data: string): string =
 
 proc parseInt*(s: string, radix: int): int {.raises: [ValueError].} =
   case radix
