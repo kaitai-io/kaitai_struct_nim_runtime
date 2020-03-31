@@ -1,6 +1,9 @@
 import streams, endians, sequtils, bitops, strutils, strformat, options
 
 type
+  KaitaiStruct* {.inheritable.} = ref object
+    io*: KaitaiStream
+    root*: KaitaiStruct
   KaitaiStream* = ref object
     io*: Stream
     bits*: uint64
@@ -242,7 +245,7 @@ proc readBytesFull*(ks: KaitaiStream): string =
       break
 
 proc readBytesTerm*(ks: KaitaiStream; term: byte;
-                      includeTerm, consumeTerm: bool): string =
+                    includeTerm, consumeTerm: bool, eosError: bool): string =
   while true:
     let c = readUint8(ks.io)
     if c == term:
