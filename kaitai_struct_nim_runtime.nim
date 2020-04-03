@@ -10,17 +10,36 @@ type
     bitsLeft*: int
   KaitaiError* = object of Exception
 
+converter toString*(bytes: seq[int8]): string =
+  proc toChar(n: int8): char =
+    if n > 255 or n < -255:
+      echo "out of bound"
+      quit QuitFailure
+    elif n < 0:
+      char(255 + n + 1)
+    else:
+      char(n)
+  result = newStringOfCap(len(bytes))
+  for b in bytes:
+    add(result, b.toChar)
+
+# !!! Not exported
 converter toString(bytes: seq[byte]): string =
   result = newStringOfCap(len(bytes))
   for b in bytes:
     add(result, char(b))
+
+# !!! Not exported
 converter toString(str: seq[char]): string =
   result = newStringOfCap(len(str))
   for c in str:
     add(result, c)
+
 converter toIntOption*(n: Option[uint8]): Option[int] = some(get(n).int)
-converter toUint8Option*(n: Option[int]): Option[uint8] = some(get(n).uint8)
+converter toUInt8Option*(n: Option[int]): Option[uint8] = some(get(n).uint8)
+converter toUInt8Option*(n: Option[char]): Option[uint8] = some(get(n).uint8)
 converter toInt8Option*(n: Option[int]): Option[int8] = some(get(n).int8)
+converter toIntOption*(n: Option[uint16]): Option[int] = some(get(n).int)
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
@@ -31,7 +50,7 @@ proc newKaitaiStringStream*(data: string): owned KaitaiStream =
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
-proc eof*(ks: KaitaiStream): bool = atEnd(ks.io)
+proc isEof*(ks: KaitaiStream): bool = atEnd(ks.io)
 proc seek*(ks: KaitaiStream, n: int) = setPosition(ks.io, n)
 proc pos*(ks: KaitaiStream): int = getPosition(ks.io)
 proc skip*(ks: KaitaiStream, n: int) = ks.seek(pos(ks) + n)
