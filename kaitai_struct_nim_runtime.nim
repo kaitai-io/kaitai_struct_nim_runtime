@@ -35,11 +35,15 @@ converter toString(str: seq[char]): string =
   for c in str:
     add(result, c)
 
+converter toIntOption*(str: Option[string]): Option[int] =
+  some(parseInt(get(str)))
 converter toIntOption*(n: Option[uint8]): Option[int] = some(get(n).int)
 converter toUInt8Option*(n: Option[int]): Option[uint8] = some(get(n).uint8)
 converter toUInt8Option*(n: Option[char]): Option[uint8] = some(get(n).uint8)
 converter toInt8Option*(n: Option[int]): Option[int8] = some(get(n).int8)
 converter toIntOption*(n: Option[uint16]): Option[int] = some(get(n).int)
+converter toFloat64Option*(n: Option[float32]): Option[float64] =
+  some(get(n).float64)
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
@@ -56,7 +60,7 @@ proc pos*(ks: KaitaiStream): int = getPosition(ks.io)
 proc skip*(ks: KaitaiStream, n: int) = ks.seek(pos(ks) + n)
 proc size*(ks: KaitaiStream): int =
   let p = getPosition(ks.io)
-  result = readAll(ks.io).len
+  result = readAll(ks.io).len + p
   setPosition(ks.io, p)
 
 # Signed integer numbers
