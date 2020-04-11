@@ -10,19 +10,6 @@ type
     bitsLeft*: int
   KaitaiError* = object of Exception
 
-converter toString*(bytes: seq[int8]): string =
-  proc toChar(n: int8): char =
-    if n > 255 or n < -255:
-      echo "out of bound"
-      quit QuitFailure
-    elif n < 0:
-      char(255 + n + 1)
-    else:
-      char(n)
-  result = newStringOfCap(len(bytes))
-  for b in bytes:
-    add(result, b.toChar)
-
 # !!! Not exported
 converter toString(bytes: seq[byte]): string =
   result = newStringOfCap(len(bytes))
@@ -35,15 +22,20 @@ converter toString(str: seq[char]): string =
   for c in str:
     add(result, c)
 
-converter toIntOption*(str: Option[string]): Option[int] =
-  some(parseInt(get(str)))
-converter toIntOption*(n: Option[uint8]): Option[int] = some(get(n).int)
-converter toUInt8Option*(n: Option[int]): Option[uint8] = some(get(n).uint8)
-converter toUInt8Option*(n: Option[char]): Option[uint8] = some(get(n).uint8)
-converter toInt8Option*(n: Option[int]): Option[int8] = some(get(n).int8)
-converter toIntOption*(n: Option[uint16]): Option[int] = some(get(n).int)
-converter toFloat64Option*(n: Option[float32]): Option[float64] =
-  some(get(n).float64)
+converter toOption*[T: not Option](x: T): Option[T] = some(x)
+
+proc toString*(bytes: seq[int8]): string =
+  proc toChar(n: int8): char =
+    if n > 255 or n < -255:
+      echo "out of bound"
+      quit QuitFailure
+    elif n < 0:
+      char(255 + n + 1)
+    else:
+      char(n)
+  result = newStringOfCap(len(bytes))
+  for b in bytes:
+    add(result, b.toChar)
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
@@ -51,6 +43,8 @@ proc newKaitaiFileStream*(filename: string): owned KaitaiStream =
   KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
 proc newKaitaiStringStream*(data: string): owned KaitaiStream =
   KaitaiStream(io: newStringStream(data), bits: 0, bitsLeft: 0)
+proc newKaitaiStringStream*(data: seq[string]): owned KaitaiStream =
+  KaitaiStream(io: newStringStream(data.join("")), bits: 0, bitsLeft: 0)
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
