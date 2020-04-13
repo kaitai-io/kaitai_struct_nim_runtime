@@ -1,4 +1,5 @@
-import streams, endians, sequtils, bitops, strutils, strformat, options
+import
+  streams, endians, sequtils, bitops, strutils, strformat, options, encodings
 
 type
   KaitaiStruct* {.inheritable.} = ref object
@@ -10,41 +11,22 @@ type
     bitsLeft*: int
   KaitaiError* = object of Exception
 
-# !!! Not exported
-converter toString(bytes: seq[byte]): string =
+converter toOption*[T: not Option](x: T): Option[T] = some(x)
+
+proc toString(bytes: seq[byte]): string =
   result = newStringOfCap(len(bytes))
   for b in bytes:
     add(result, char(b))
-
-# !!! Not exported
-converter toString(str: seq[char]): string =
-  result = newStringOfCap(len(str))
-  for c in str:
-    add(result, c)
-
-converter toOption*[T: not Option](x: T): Option[T] = some(x)
-
-proc toString*(bytes: seq[int8]): string =
-  proc toChar(n: int8): char =
-    if n > 255 or n < -255:
-      echo "out of bound"
-      quit QuitFailure
-    elif n < 0:
-      char(255 + n + 1)
-    else:
-      char(n)
-  result = newStringOfCap(len(bytes))
-  for b in bytes:
-    add(result, b.toChar)
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
 proc newKaitaiFileStream*(filename: string): owned KaitaiStream =
   KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
-proc newKaitaiStringStream*(data: string): owned KaitaiStream =
-  KaitaiStream(io: newStringStream(data), bits: 0, bitsLeft: 0)
-proc newKaitaiStringStream*(data: seq[string]): owned KaitaiStream =
-  KaitaiStream(io: newStringStream(data.join("")), bits: 0, bitsLeft: 0)
+proc newKaitaiStream*(data: seq[byte]): owned KaitaiStream =
+  KaitaiStream(io: newStringStream(toString(data)), bits: 0, bitsLeft: 0)
+proc newKaitaiStream*(data: seq[seq[byte]]): owned KaitaiStream =
+  KaitaiStream(io: newStringStream(data.mapIt(it.toString).join("")),
+               bits: 0, bitsLeft: 0)
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
@@ -245,13 +227,13 @@ proc readBitsInt*(ks: KaitaiStream, n: int): uint64 =
 # XXX: proc readBitsArray*(ks: KaitaiStream, n: int): string =
 
 # Byte arrays
-proc readBytes*(ks: KaitaiStream, n: int): string =
-  result = newString(n)
+proc readBytes*(ks: KaitaiStream, n: int): seq[byte] =
+  result = newSeq[byte](n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
-proc readBytesFull*(ks: KaitaiStream): string =
+proc readBytesFull*(ks: KaitaiStream): seq[byte] =
   const bufferSize = 1024
-  var buffer {.noinit.}: array[bufferSize, char]
+  var buffer {.noinit.}: array[bufferSize, byte]
   while true:
     let bytesRead = ks.io.readData(addr(buffer[0]), bufferSize)
     if bytesRead == 0: break
@@ -262,54 +244,57 @@ proc readBytesFull*(ks: KaitaiStream): string =
       break
 
 proc readBytesTerm*(ks: KaitaiStream; term: byte;
-                    includeTerm, consumeTerm: bool, eosError: bool): string =
+                    includeTerm, consumeTerm: bool, eosError: bool): seq[byte] =
   while true:
     let c = readUint8(ks.io)
     if c == term:
       if includeTerm:
-        result.add(term.char)
+        result.add(term)
       if not consumeTerm:
         ks.io.setPosition(ks.io.getPosition - 1)
       break
-    result.add(c.char)
+    result.add(c)
 
-proc ensureFixedContents*(ks: KaitaiStream, expected: string): string =
+proc ensureFixedContents*(ks: KaitaiStream, expected: seq[byte]): seq[byte] =
   result = ks.read_bytes(expected.len)
   if result != expected:
     raise newException(AssertionError, "the request to the OS failed")
 
-proc bytesStripRight*(bytes: string, padByte: byte): string =
+proc bytesStripRight*(bytes: seq[byte], padByte: byte): seq[byte] =
   var newLen = bytes.len
-  while newLen > 0 and bytes[newLen - 1].byte == padByte: dec(newLen)
+  while newLen > 0 and bytes[newLen - 1] == padByte: dec(newLen)
   result = bytes
   result.setLen(newLen)
 
-proc bytesTerminate*(bytes: string, term: byte, includeTerm: bool): string =
+proc bytesTerminate*(bytes: seq[byte], term: byte, includeTerm: bool): seq[byte] =
   var newLen: int
   let maxLen = bytes.len
-  while newLen < maxLen and bytes[newLen].byte != term: inc(newLen)
+  while newLen < maxLen and bytes[newLen] != term: inc(newLen)
   if includeTerm and newLen < maxLen: inc(newLen)
   result = bytes
   result.setLen(newLen)
 
-# XXX: proc bytesToStr(bytes: string, encoding: string): string =
+# XXX: proc bytesToStr(bytes: seq[byte], encoding: string): string =
+
+proc encode*(src: seq[byte], encoding: string): string =
+  convert(src.toString, srcEncoding = encoding)
 
 # Byte array processing
-proc processXor*(data: string, key: byte): string =
-  result = data.mapIt(it.byte xor key)
+proc processXor*(data: seq[byte], key: byte): seq[byte] =
+  result = data.mapIt(it xor key)
 
-proc processXor*(data, key: string): string =
-  result = newString(data.len)
+proc processXor*(data, key: seq[byte]): seq[byte] =
+  result = newSeq[byte](data.len)
   var currKeyIdx: int
   for i in 0..<data.len:
-    result[i] = char(data[i].byte xor key[currKeyIdx].byte)
+    result[i] = data[i] xor key[currKeyIdx]
     inc currKeyIdx
     if currKeyIdx >= key.len: currKeyIdx = 0
 
-proc processRotateLeft*(data: string, amount: int): string =
-  result = data.mapIt(rotateLeftBits(it.byte, amount.byte))
+proc processRotateLeft*(data: seq[byte], amount: int): seq[byte] =
+  result = data.mapIt(rotateLeftBits(it, amount))
 
-# XXX: proc process_zlib(data: string): string =
+# XXX: proc process_zlib(data: seq[byte]): seq[byte] =
 
 proc parseInt*(s: string, radix: int): int {.raises: [ValueError].} =
   case radix
