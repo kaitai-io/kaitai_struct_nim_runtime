@@ -11,12 +11,22 @@ type
     bitsLeft*: int
   KaitaiError* = object of Exception
 
-converter toOption*[T: not Option](x: T): Option[T] = some(x)
-
 proc toString(bytes: seq[byte]): string =
   result = newStringOfCap(len(bytes))
   for b in bytes:
     add(result, char(b))
+
+converter toOption*[T: not Option](x: T): Option[T] = some(x)
+
+proc `<=`*(x, y: seq[byte]): bool = x.toString <= y.toString
+proc `<`*(x, y: seq[byte]): bool = x.toString <= y.toString
+proc `-`*(n: byte): byte = byte(255 + n + 1)
+proc `%%%`*[T, U: SomeInteger](a: T, b: U): U =
+  if a >= T(0):
+    result = a.U mod b;
+  else:
+    let x = if b >= U(0): b else: -b
+    result = x - 1 + U(a + 1) mod b;
 
 proc newKaitaiFileStream*(f: File): owned KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
@@ -305,10 +315,3 @@ proc parseInt*(s: string, radix: int): int {.raises: [ValueError].} =
   else:
     raise newException(ValueError,
       fmt"base {radix} is not supported; use base 2, 8, 10 or 16")
-
-proc `%%%`*[T, U: SomeInteger](a: T, b: U): U =
-  if a >= T(0):
-    result = a.U mod b;
-  else:
-    let x = if b >= U(0): b else: -b
-    result = x - 1 + U(a + 1) mod b;
