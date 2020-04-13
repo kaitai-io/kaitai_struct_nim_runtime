@@ -20,7 +20,7 @@ converter toOption*[T: not Option](x: T): Option[T] = some(x)
 
 proc `<=`*(x, y: seq[byte]): bool = x.toString <= y.toString
 proc `<`*(x, y: seq[byte]): bool = x.toString <= y.toString
-proc `-`*(n: byte): byte = byte(255 - n + 1)
+proc `-`*(n: byte): byte = byte(255'u8 - n + 1)
 proc `%%%`*[T, U: SomeInteger](a: T, b: U): U =
   if a >= T(0):
     result = a.U mod b;
