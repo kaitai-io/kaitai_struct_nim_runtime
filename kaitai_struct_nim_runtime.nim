@@ -40,7 +40,7 @@ proc newKaitaiStream*(data: seq[seq[byte]]): KaitaiStream =
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
-proc isEof*(ks: KaitaiStream): bool = atEnd(ks.io)
+proc isEof*(ks: KaitaiStream): bool = atEnd(ks.io) and ks.bitsLeft == 0
 proc seek*(ks: KaitaiStream, n: int) = setPosition(ks.io, n)
 proc pos*(ks: KaitaiStream): int = getPosition(ks.io)
 proc skip*(ks: KaitaiStream, n: int) = ks.seek(pos(ks) + n)
