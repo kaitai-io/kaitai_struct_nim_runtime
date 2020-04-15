@@ -287,7 +287,7 @@ proc bytesTerminate*(bytes: seq[byte], term: byte, includeTerm: bool): seq[byte]
 # XXX: proc bytesToStr(bytes: seq[byte], encoding: string): string =
 
 proc encode*(src: seq[byte], encoding: string): string =
-  convert(src.toString, destEncoding = encoding)
+  convert(src.toString, srcEncoding = encoding)
 
 # Byte array processing
 proc processXor*(data: seq[byte], key: byte): seq[byte] =
