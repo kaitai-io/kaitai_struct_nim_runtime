@@ -28,13 +28,13 @@ proc `%%%`*[T, U: SomeInteger](a: T, b: U): U =
     let x = if b >= U(0): b else: -b
     result = x - 1 + U(a + 1) mod b;
 
-proc newKaitaiFileStream*(f: File): owned KaitaiStream =
+proc newKaitaiFileStream*(f: File): KaitaiStream =
   KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
-proc newKaitaiFileStream*(filename: string): owned KaitaiStream =
+proc newKaitaiFileStream*(filename: string): KaitaiStream =
   KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
-proc newKaitaiStream*(data: seq[byte]): owned KaitaiStream =
+proc newKaitaiStream*(data: seq[byte]): KaitaiStream =
   KaitaiStream(io: newStringStream(toString(data)), bits: 0, bitsLeft: 0)
-proc newKaitaiStream*(data: seq[seq[byte]]): owned KaitaiStream =
+proc newKaitaiStream*(data: seq[seq[byte]]): KaitaiStream =
   KaitaiStream(io: newStringStream(data.mapIt(it.toString).join("")),
                bits: 0, bitsLeft: 0)
 
@@ -287,7 +287,7 @@ proc bytesTerminate*(bytes: seq[byte], term: byte, includeTerm: bool): seq[byte]
 # XXX: proc bytesToStr(bytes: seq[byte], encoding: string): string =
 
 proc encode*(src: seq[byte], encoding: string): string =
-  convert(src.toString, srcEncoding = encoding)
+  convert(src.toString, destEncoding = encoding)
 
 # Byte array processing
 proc processXor*(data: seq[byte], key: byte): seq[byte] =
