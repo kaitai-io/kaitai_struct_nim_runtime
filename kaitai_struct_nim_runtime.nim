@@ -238,6 +238,7 @@ proc readBitsInt*(ks: KaitaiStream, n: int): uint64 =
 
 # Byte arrays
 proc readBytes*(ks: KaitaiStream, n: int): seq[byte] =
+  if n == 0: return
   result = newSeq[byte](n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
