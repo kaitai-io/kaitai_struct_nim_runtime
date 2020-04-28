@@ -228,9 +228,9 @@ proc readBitsInt*(ks: KaitaiStream, n: int): uint64 =
       ks.bits = ks.bits or buf[i]
       inc(ks.bitsLeft, 8)
   let
+    mask = getMaskOnes(n)
     shiftBits = ks.bitsLeft - n
-    mask = getMaskOnes(n) shl shiftBits
-  result = (ks.bits and mask) shr shiftBits
+  result = (ks.bits shr shiftBits) and mask
   dec(ks.bitsLeft, n)
   ks.bits = ks.bits and getMaskOnes(ks.bitsLeft)
 
