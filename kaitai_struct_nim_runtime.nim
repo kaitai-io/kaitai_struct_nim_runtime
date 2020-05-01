@@ -214,10 +214,11 @@ proc align_to_byte*(ks: KaitaiStream) =
   ks.bits = 0
   ks.bitsLeft = 0
 
-proc readBitsInt*(ks: KaitaiStream, n: int): uint64 =
-  proc getMaskOnes(n: int): uint64 =
-    if n == 64: 0xFFFFFFFFFFFFFFFF'u64
-    else: (1'u64 shl n) - 1
+proc getMaskOnes(n: int): uint64 =
+  if n == 64: 0xFFFFFFFFFFFFFFFF'u64
+  else: (1'u64 shl n) - 1
+
+proc readBitsIntBe*(ks: KaitaiStream, n: int): uint64 =
   let bitsNeeded = n - ks.bitsLeft
   if bitsNeeded > 0:
     var bytesNeeded = ((bitsNeeded - 1) div 8) + 1;
@@ -228,11 +229,31 @@ proc readBitsInt*(ks: KaitaiStream, n: int): uint64 =
       ks.bits = ks.bits or buf[i]
       inc(ks.bitsLeft, 8)
   let
+    mask = getMaskOnes(n)
     shiftBits = ks.bitsLeft - n
-    mask = getMaskOnes(n) shl shiftBits
-  result = (ks.bits and mask) shr shiftBits
+  result = (ks.bits shr shiftBits) and mask
   dec(ks.bitsLeft, n)
   ks.bits = ks.bits and getMaskOnes(ks.bitsLeft)
+
+proc readBitsInt*(ks: KaitaiStream, n: int): uint64 {.deprecated: "use readBitsIntBe instead".} =
+  ks.readBitsIntBe(n)
+
+proc readBitsIntLe*(ks: KaitaiStream, n: int): uint64 =
+  let bitsNeeded = n - ks.bitsLeft
+  if bitsNeeded > 0:
+    var bytesNeeded = ((bitsNeeded - 1) div 8) + 1;
+    var buf: array[8, byte]
+    doAssert ks.io.readData(addr(buf), bytesNeeded) == bytesNeeded
+    for i in 0..<bytesNeeded:
+      ks.bits = ks.bits or (uint64(buf[i]) shl ks.bitsLeft)
+      inc(ks.bitsLeft, 8)
+  # raw mask with required number of 1s, starting from lowest bit
+  let mask = getMaskOnes(n)
+  # derive reading result
+  result = ks.bits and mask
+  # remove bottom bits that we've just read by shifting
+  ks.bits = ks.bits shr n
+  dec(ks.bitsLeft, n)
 
 # XXX: proc readBitsArray*(ks: KaitaiStream, n: int): string =
 
