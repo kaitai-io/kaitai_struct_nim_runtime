@@ -210,7 +210,7 @@ else:
   proc readF8Le*(ks: KaitaiStream): float64 = readFloat64(ks.io)
 
 # Unaligned bit values
-proc align_to_byte*(ks: KaitaiStream) =
+proc alignToByte*(ks: KaitaiStream) =
   ks.bits = 0
   ks.bitsLeft = 0
 
