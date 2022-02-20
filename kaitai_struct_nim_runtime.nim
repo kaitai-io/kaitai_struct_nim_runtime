@@ -214,46 +214,66 @@ proc alignToByte*(ks: KaitaiStream) =
   ks.bitsLeft = 0
   ks.bits = 0
 
-proc getMaskOnes(n: int): uint64 =
-  if n == 64: 0xFFFFFFFFFFFFFFFF'u64
-  else: (1'u64 shl n) - 1
-
 proc readBitsIntBe*(ks: KaitaiStream, n: int): uint64 =
+  result = 0
+
   let bitsNeeded = n - ks.bitsLeft
+  ks.bitsLeft = -bitsNeeded and 7 # `-bitsNeeded mod 8`
+
   if bitsNeeded > 0:
-    var bytesNeeded = ((bitsNeeded - 1) div 8) + 1;
+    # 1 bit  => 1 byte
+    # 8 bits => 1 byte
+    # 9 bits => 2 bytes
+    let bytesNeeded = ((bitsNeeded - 1) div 8) + 1 # `ceil(bitsNeeded / 8)`
+    doAssert bytesNeeded <= 8, "readBitsIntBe: more than 8 bytes requested"
     var buf: array[8, byte]
     doAssert ks.io.readData(addr(buf), bytesNeeded) == bytesNeeded
     for i in 0..<bytesNeeded:
-      ks.bits = ks.bits shl 8
-      ks.bits = ks.bits or buf[i]
-      inc(ks.bitsLeft, 8)
-  let
-    mask = getMaskOnes(n)
-    shiftBits = ks.bitsLeft - n
-  result = (ks.bits shr shiftBits) and mask
-  dec(ks.bitsLeft, n)
-  ks.bits = ks.bits and getMaskOnes(ks.bitsLeft)
+      result = (result shl 8) or buf[i]
+
+    let newBits = result
+    result = (result shr ks.bitsLeft) or (if bitsNeeded < 64: ks.bits shl bitsNeeded else: 0) # avoid undefined behavior of `(x shl 64)`
+    ks.bits = newBits # will be masked at the end of the function
+  else:
+    result = ks.bits shr -bitsNeeded # shift unneeded bits out
+
+  let mask = (1'u64 shl ks.bitsLeft) - 1 # `bitsLeft` is in range 0..7, so `(1'u64 shl 64)` does not have to be considered
+  ks.bits = ks.bits and mask
 
 proc readBitsInt*(ks: KaitaiStream, n: int): uint64 {.deprecated: "use readBitsIntBe instead".} =
   ks.readBitsIntBe(n)
 
 proc readBitsIntLe*(ks: KaitaiStream, n: int): uint64 =
+  result = 0
   let bitsNeeded = n - ks.bitsLeft
+
   if bitsNeeded > 0:
-    var bytesNeeded = ((bitsNeeded - 1) div 8) + 1;
+    # 1 bit  => 1 byte
+    # 8 bits => 1 byte
+    # 9 bits => 2 bytes
+    let bytesNeeded = ((bitsNeeded - 1) div 8) + 1 # `ceil(bitsNeeded / 8)`
+    doAssert bytesNeeded <= 8, "readBitsIntLe: more than 8 bytes requested"
     var buf: array[8, byte]
     doAssert ks.io.readData(addr(buf), bytesNeeded) == bytesNeeded
     for i in 0..<bytesNeeded:
-      ks.bits = ks.bits or (uint64(buf[i]) shl ks.bitsLeft)
-      inc(ks.bitsLeft, 8)
-  # raw mask with required number of 1s, starting from lowest bit
-  let mask = getMaskOnes(n)
-  # derive reading result
-  result = ks.bits and mask
-  # remove bottom bits that we've just read by shifting
-  ks.bits = ks.bits shr n
-  dec(ks.bitsLeft, n)
+      result = result or (uint64(buf[i]) shl (i * 8))
+
+    # NB: in Nim, using the `shl` and `shr` operators to shift by more than 64 bits
+    # is undefined behavior (see https://github.com/nim-lang/Nim/pull/11555).
+    # So we define our desired behavior here.
+    let newBits = if bitsNeeded < 64: result shr bitsNeeded else: 0
+    result = (result shl ks.bitsLeft) or ks.bits
+    ks.bits = newBits
+  else:
+    result = ks.bits
+    ks.bits = ks.bits shr n
+
+  ks.bitsLeft = -bitsNeeded and 7 # `-bitsNeeded mod 8`
+
+  if n < 64:
+    let mask = (1'u64 shl n) - 1
+    result = result and mask
+  # if `n == 64`, do nothing (avoids undefined behavior of `(1'u64 shl 64)`)
 
 # XXX: proc readBitsArray*(ks: KaitaiStream, n: int): string =
 
