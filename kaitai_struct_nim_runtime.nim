@@ -7,8 +7,8 @@ type
     root*: KaitaiStruct
   KaitaiStream* = ref object
     io*: Stream
-    bits*: uint64
     bitsLeft*: int
+    bits*: uint64
   KaitaiError* = object of Exception
 
 proc toString(bytes: seq[byte]): string =
@@ -29,14 +29,14 @@ proc `%%%`*[T, U: SomeInteger](a: T, b: U): U =
     result = x - 1 + U(a + 1) mod b;
 
 proc newKaitaiFileStream*(f: File): KaitaiStream =
-  KaitaiStream(io: newFileStream(f), bits: 0, bitsLeft: 0)
+  KaitaiStream(io: newFileStream(f), bitsLeft: 0, bits: 0)
 proc newKaitaiFileStream*(filename: string): KaitaiStream =
-  KaitaiStream(io: newFileStream(filename), bits: 0, bitsLeft: 0)
+  KaitaiStream(io: newFileStream(filename), bitsLeft: 0, bits: 0)
 proc newKaitaiStream*(data: seq[byte]): KaitaiStream =
-  KaitaiStream(io: newStringStream(toString(data)), bits: 0, bitsLeft: 0)
+  KaitaiStream(io: newStringStream(toString(data)), bitsLeft: 0, bits: 0)
 proc newKaitaiStream*(data: seq[seq[byte]]): KaitaiStream =
   KaitaiStream(io: newStringStream(data.mapIt(it.toString).join("")),
-               bits: 0, bitsLeft: 0)
+               bitsLeft: 0, bits: 0)
 
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
@@ -211,8 +211,8 @@ else:
 
 # Unaligned bit values
 proc alignToByte*(ks: KaitaiStream) =
-  ks.bits = 0
   ks.bitsLeft = 0
+  ks.bits = 0
 
 proc getMaskOnes(n: int): uint64 =
   if n == 64: 0xFFFFFFFFFFFFFFFF'u64
