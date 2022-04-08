@@ -329,7 +329,13 @@ proc bytesTerminate*(bytes: seq[byte], term: byte, includeTerm: bool): seq[byte]
 # XXX: proc bytesToStr(bytes: seq[byte], encoding: string): string =
 
 proc encode*(src: seq[byte], encoding: string): string =
-  convert(src.toString, srcEncoding = encoding)
+  when not defined(windows):
+    convert(src.toString, srcEncoding = encoding)
+  else:
+    var encoding = encoding
+    if cmpIgnoreCase(encoding, "ascii"):
+      encoding = "us-ascii"
+    convert(src.toString, srcEncoding = encoding)
 
 # Byte array processing
 proc processXor*(data: seq[byte], key: byte): seq[byte] =
