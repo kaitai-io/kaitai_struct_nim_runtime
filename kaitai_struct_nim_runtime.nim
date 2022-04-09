@@ -333,7 +333,7 @@ proc encode*(src: seq[byte], encoding: string): string =
     convert(src.toString, srcEncoding = encoding)
   else:
     var encoding = encoding
-    if cmpIgnoreCase(encoding, "ascii"):
+    if cmpIgnoreCase(encoding, "ascii") == 0:
       encoding = "us-ascii"
     convert(src.toString, srcEncoding = encoding)
 
