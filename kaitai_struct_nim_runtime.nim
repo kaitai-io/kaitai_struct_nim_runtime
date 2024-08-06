@@ -296,7 +296,7 @@ proc readBytesFull*(ks: KaitaiStream): seq[byte] =
       break
 
 proc readBytesTerm*(ks: KaitaiStream; term: byte;
-                    includeTerm, consumeTerm: bool, eosError: bool): seq[byte] =
+                    includeTerm, consumeTerm, eosError: bool): seq[byte] =
   while true:
     let c = readUint8(ks.io)
     if c == term:
@@ -305,6 +305,27 @@ proc readBytesTerm*(ks: KaitaiStream; term: byte;
       if not consumeTerm:
         ks.io.setPosition(ks.io.getPosition - 1)
       break
+    result.add(c)
+
+proc readBytesTermMulti*(ks: KaitaiStream; term: seq[byte];
+                         includeTerm, consumeTerm, eosError: bool): seq[byte] =
+  let unitSize = term.len
+  var c = newSeq[byte](unitSize)
+  while true:
+    let numRead = ks.io.readData(addr(c[0]), unitSize)
+    if numRead < unitSize:
+      if eosError:
+        raise newException(IOError, "end of stream reached, but no terminator found")
+      result.add(c[0 ..< numRead])
+      break
+
+    if c == term:
+      if includeTerm:
+        result.add(c)
+      if not consumeTerm:
+        ks.io.setPosition(ks.io.getPosition - unitSize)
+      break
+
     result.add(c)
 
 proc ensureFixedContents*(ks: KaitaiStream, expected: seq[byte]): seq[byte] =
@@ -325,6 +346,26 @@ proc bytesTerminate*(bytes: seq[byte], term: byte, includeTerm: bool): seq[byte]
   if includeTerm and newLen < maxLen: inc(newLen)
   result = bytes
   result.setLen(newLen)
+
+proc bytesTerminateMulti*(bytes: seq[byte], term: seq[byte], includeTerm: bool): seq[byte] =
+  let unitSize = term.len
+  if unitSize == 0:
+    return @[]
+  let len = bytes.len
+  var iTerm = 0
+  var iBytes = 0
+  while iBytes < len:
+    if bytes[iBytes] != term[iTerm]:
+      iBytes += unitSize - iTerm
+      iTerm = 0
+      continue
+
+    inc(iBytes)
+    inc(iTerm)
+    if iTerm == unitSize:
+      return bytes[0 ..< iBytes - (if includeTerm: 0 else: unitSize)]
+
+  return bytes
 
 # XXX: proc bytesToStr(bytes: seq[byte], encoding: string): string =
 
