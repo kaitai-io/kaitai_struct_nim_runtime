@@ -52,162 +52,73 @@ proc size*(ks: KaitaiStream): int =
 # Signed integer numbers
 proc readS1*(ks: KaitaiStream): int8 = readInt8(ks.io)
 
-when system.cpuEndian == bigEndian:
-  proc readS2Be*(ks: KaitaiStream): int16 = readInt16(ks.io)
-  proc readS4Be*(ks: KaitaiStream): int32 = readInt32(ks.io)
-  proc readS8Be*(ks: KaitaiStream): int64 = readInt64(ks.io)
+proc readS2Be*(ks: KaitaiStream): int16 =
+  let native = readInt16(ks.io)
+  bigEndian16(addr result, addr native)
 
-  proc readS2Le*(ks: KaitaiStream): int16 =
-    var
-      bufferIn: array[2, byte]
-      bufferOut: array[2, byte]
-    doAssert ks.io.readData(addr(bufferIn), 2) == 2
-    swapEndian16(addr(bufferOut), addr(bufferIn))
-    result = cast[int16](bufferOut)
+proc readS4Be*(ks: KaitaiStream): int32 =
+  let native = readInt32(ks.io)
+  bigEndian32(addr result, addr native)
 
-  proc readS4Le*(ks: KaitaiStream): int32 =
-    var
-      bufferIn: array[4, byte]
-      bufferOut: array[4, byte]
-    doAssert ks.io.readData(addr(bufferIn), 4) == 4
-    swapEndian32(addr(bufferOut), addr(bufferIn))
-    result = cast[int32](bufferOut)
+proc readS8Be*(ks: KaitaiStream): int64 =
+  let native = readInt64(ks.io)
+  bigEndian64(addr result, addr native)
 
-  proc readS8Le*(ks: KaitaiStream): int64 =
-    var
-      bufferIn: array[8, byte]
-      bufferOut: array[8, byte]
-    doAssert ks.io.readData(addr(bufferIn), 8) == 8
-    swapEndian64(addr(bufferOut), addr(bufferIn))
-    result = cast[int64](bufferOut)
-else:
-  proc readS2Be*(ks: KaitaiStream): int16 =
-    var
-      bufferIn: array[2, byte]
-      bufferOut: array[2, byte]
-    doAssert ks.io.readData(addr(bufferIn), 2) == 2
-    swapEndian16(addr(bufferOut), addr(bufferIn))
-    result = cast[int16](bufferOut)
+proc readS2Le*(ks: KaitaiStream): int16 =
+  let native = readInt16(ks.io)
+  littleEndian16(addr result, addr native)
 
-  proc readS4Be*(ks: KaitaiStream): int32 =
-    var
-      bufferIn: array[4, byte]
-      bufferOut: array[4, byte]
-    doAssert ks.io.readData(addr(bufferIn), 4) == 4
-    swapEndian32(addr(bufferOut), addr(bufferIn))
-    result = cast[int32](bufferOut)
+proc readS4Le*(ks: KaitaiStream): int32 =
+  let native = readInt32(ks.io)
+  littleEndian32(addr result, addr native)
 
-  proc readS8Be*(ks: KaitaiStream): int64 =
-    var
-      bufferIn: array[8, byte]
-      bufferOut: array[8, byte]
-    doAssert ks.io.readData(addr(bufferIn), 8) == 8
-    swapEndian64(addr(bufferOut), addr(bufferIn))
-    result = cast[int64](bufferOut)
-
-  proc readS2Le*(ks: KaitaiStream): int16 = readInt16(ks.io)
-  proc readS4Le*(ks: KaitaiStream): int32 = readInt32(ks.io)
-  proc readS8Le*(ks: KaitaiStream): int64 = readInt64(ks.io)
+proc readS8Le*(ks: KaitaiStream): int64 =
+  let native = readInt64(ks.io)
+  littleEndian64(addr result, addr native)
 
 # Unsigned integer numbers
 proc readU1*(ks: KaitaiStream): uint8 = readUint8(ks.io)
 
-when system.cpuEndian == bigEndian:
-  proc readU2Be*(ks: KaitaiStream): uint16 = readUint16(ks.io)
-  proc readU4Be*(ks: KaitaiStream): uint32 = readUint32(ks.io)
-  proc readU8Be*(ks: KaitaiStream): uint64 = readUint64(ks.io)
+proc readU2Be*(ks: KaitaiStream): uint16 =
+  let native = readUint16(ks.io)
+  bigEndian16(addr result, addr native)
 
-  proc readU2Le*(ks: KaitaiStream): uint16 =
-    var
-      bufferIn: array[2, byte]
-      bufferOut: array[2, byte]
-    doAssert ks.io.readData(addr(bufferIn), 2) == 2
-    swapEndian16(addr(bufferOut), addr(bufferIn))
-    result = cast[uint16](bufferOut)
+proc readU4Be*(ks: KaitaiStream): uint32 =
+  let native = readUint32(ks.io)
+  bigEndian32(addr result, addr native)
 
-  proc readU4Le*(ks: KaitaiStream): uint32 =
-    var
-      bufferIn: array[4, byte]
-      bufferOut: array[4, byte]
-    doAssert ks.io.readData(addr(bufferIn), 4) == 4
-    swapEndian32(addr(bufferOut), addr(bufferIn))
-    result = cast[uint32](bufferOut)
+proc readU8Be*(ks: KaitaiStream): uint64 =
+  let native = readUint64(ks.io)
+  bigEndian64(addr result, addr native)
 
-  proc readU8Le*(ks: KaitaiStream): uint64 =
-    var
-      bufferIn: array[8, byte]
-      bufferOut: array[8, byte]
-    doAssert ks.io.readData(addr(bufferIn), 8) == 8
-    swapEndian64(addr(bufferOut), addr(bufferIn))
-    result = cast[uint64](bufferOut)
-else:
-  proc readU2Be*(ks: KaitaiStream): uint16 =
-    var
-      bufferIn: array[2, byte]
-      bufferOut: array[2, byte]
-    doAssert ks.io.readData(addr(bufferIn), 2) == 2
-    swapEndian16(addr(bufferOut), addr(bufferIn))
-    result = cast[uint16](bufferOut)
+proc readU2Le*(ks: KaitaiStream): uint16 =
+  let native = readUint16(ks.io)
+  littleEndian16(addr result, addr native)
 
-  proc readU4Be*(ks: KaitaiStream): uint32 =
-    var
-      bufferIn: array[4, byte]
-      bufferOut: array[4, byte]
-    doAssert ks.io.readData(addr(bufferIn), 4) == 4
-    swapEndian32(addr(bufferOut), addr(bufferIn))
-    result = cast[uint32](bufferOut)
+proc readU4Le*(ks: KaitaiStream): uint32 =
+  let native = readUint32(ks.io)
+  littleEndian32(addr result, addr native)
 
-  proc readU8Be*(ks: KaitaiStream): uint64 =
-    var
-      bufferIn: array[8, byte]
-      bufferOut: array[8, byte]
-    doAssert ks.io.readData(addr(bufferIn), 8) == 8
-    swapEndian64(addr(bufferOut), addr(bufferIn))
-    result = cast[uint64](bufferOut)
-
-  proc readU2Le*(ks: KaitaiStream): uint16 = readUint16(ks.io)
-  proc readU4Le*(ks: KaitaiStream): uint32 = readUint32(ks.io)
-  proc readU8Le*(ks: KaitaiStream): uint64 = readUint64(ks.io)
+proc readU8Le*(ks: KaitaiStream): uint64 =
+  let native = readUint64(ks.io)
+  littleEndian64(addr result, addr native)
 
 # Floating point numbers
-when system.cpuEndian == bigEndian:
-  proc readF4Be*(ks: KaitaiStream): float32 = readFloat32(ks.io)
-  proc readF8Be*(ks: KaitaiStream): float64 = readFloat64(ks.io)
+proc readF4Be*(ks: KaitaiStream): float32 =
+  let native = readFloat32(ks.io)
+  bigEndian32(addr result, addr native)
 
-  proc readF4Le*(ks: KaitaiStream): float32 =
-    var
-      bufferIn: array[4, byte]
-      bufferOut: array[4, byte]
-    doAssert ks.io.readData(addr(bufferIn), 4) == 4
-    swapEndian32(addr(bufferOut), addr(bufferIn))
-    result = cast[float32](bufferOut)
+proc readF8Be*(ks: KaitaiStream): float64 =
+  let native = readFloat64(ks.io)
+  bigEndian64(addr result, addr native)
 
-  proc readF8Le*(ks: KaitaiStream): float64 =
-    var
-      bufferIn: array[8, byte]
-      bufferOut: array[8, byte]
-    doAssert ks.io.readData(addr(bufferIn), 8) == 8
-    swapEndian64(addr(bufferOut), addr(bufferIn))
-    result = cast[float64](bufferOut)
-else:
-  proc readF4Be*(ks: KaitaiStream): float32 =
-    var
-      bufferIn: array[4, byte]
-      bufferOut: array[4, byte]
-    doAssert ks.io.readData(addr(bufferIn), 4) == 4
-    swapEndian32(addr(bufferOut), addr(bufferIn))
-    result = cast[float32](bufferOut)
+proc readF4Le*(ks: KaitaiStream): float32 =
+  let native = readFloat32(ks.io)
+  littleEndian32(addr result, addr native)
 
-  proc readF8Be*(ks: KaitaiStream): float64 =
-    var
-      bufferIn: array[8, byte]
-      bufferOut: array[8, byte]
-    doAssert ks.io.readData(addr(bufferIn), 8) == 8
-    swapEndian64(addr(bufferOut), addr(bufferIn))
-    result = cast[float64](bufferOut)
-
-  proc readF4Le*(ks: KaitaiStream): float32 = readFloat32(ks.io)
-  proc readF8Le*(ks: KaitaiStream): float64 = readFloat64(ks.io)
+proc readF8Le*(ks: KaitaiStream): float64 =
+  let native = readFloat64(ks.io)
+  littleEndian64(addr result, addr native)
 
 # Unaligned bit values
 proc alignToByte*(ks: KaitaiStream) =
