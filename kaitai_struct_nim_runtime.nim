@@ -38,10 +38,19 @@ proc newKaitaiStream*(data: seq[seq[byte]]): KaitaiStream =
   KaitaiStream(io: newStringStream(data.mapIt(it.toString).join("")),
                bitsLeft: 0, bits: 0)
 
+# NOTE: alignToByte() must be defined here at the top because in Nim, you can
+# only call methods that were defined earlier (i.e. you cannot call methods
+# defined later in the file).
+proc alignToByte*(ks: KaitaiStream) =
+  ks.bitsLeft = 0
+  ks.bits = 0
+
 # Stream positioning
 proc close*(ks: KaitaiStream) = close(ks.io)
 proc isEof*(ks: KaitaiStream): bool = atEnd(ks.io) and ks.bitsLeft == 0
-proc seek*(ks: KaitaiStream, n: int) = setPosition(ks.io, n)
+proc seek*(ks: KaitaiStream, n: int) =
+  ks.alignToByte()
+  setPosition(ks.io, n)
 proc pos*(ks: KaitaiStream): int = getPosition(ks.io)
 proc skip*(ks: KaitaiStream, n: int) = ks.seek(pos(ks) + n)
 proc size*(ks: KaitaiStream): int =
@@ -50,81 +59,97 @@ proc size*(ks: KaitaiStream): int =
   setPosition(ks.io, p)
 
 # Signed integer numbers
-proc readS1*(ks: KaitaiStream): int8 = readInt8(ks.io)
+proc readS1*(ks: KaitaiStream): int8 =
+  ks.alignToByte()
+  readInt8(ks.io)
 
 proc readS2be*(ks: KaitaiStream): int16 =
+  ks.alignToByte()
   let native = readInt16(ks.io)
   bigEndian16(addr result, addr native)
 
 proc readS4be*(ks: KaitaiStream): int32 =
+  ks.alignToByte()
   let native = readInt32(ks.io)
   bigEndian32(addr result, addr native)
 
 proc readS8be*(ks: KaitaiStream): int64 =
+  ks.alignToByte()
   let native = readInt64(ks.io)
   bigEndian64(addr result, addr native)
 
 proc readS2le*(ks: KaitaiStream): int16 =
+  ks.alignToByte()
   let native = readInt16(ks.io)
   littleEndian16(addr result, addr native)
 
 proc readS4le*(ks: KaitaiStream): int32 =
+  ks.alignToByte()
   let native = readInt32(ks.io)
   littleEndian32(addr result, addr native)
 
 proc readS8le*(ks: KaitaiStream): int64 =
+  ks.alignToByte()
   let native = readInt64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Unsigned integer numbers
-proc readU1*(ks: KaitaiStream): uint8 = readUint8(ks.io)
+proc readU1*(ks: KaitaiStream): uint8 =
+  ks.alignToByte()
+  readUint8(ks.io)
 
 proc readU2be*(ks: KaitaiStream): uint16 =
+  ks.alignToByte()
   let native = readUint16(ks.io)
   bigEndian16(addr result, addr native)
 
 proc readU4be*(ks: KaitaiStream): uint32 =
+  ks.alignToByte()
   let native = readUint32(ks.io)
   bigEndian32(addr result, addr native)
 
 proc readU8be*(ks: KaitaiStream): uint64 =
+  ks.alignToByte()
   let native = readUint64(ks.io)
   bigEndian64(addr result, addr native)
 
 proc readU2le*(ks: KaitaiStream): uint16 =
+  ks.alignToByte()
   let native = readUint16(ks.io)
   littleEndian16(addr result, addr native)
 
 proc readU4le*(ks: KaitaiStream): uint32 =
+  ks.alignToByte()
   let native = readUint32(ks.io)
   littleEndian32(addr result, addr native)
 
 proc readU8le*(ks: KaitaiStream): uint64 =
+  ks.alignToByte()
   let native = readUint64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Floating point numbers
 proc readF4be*(ks: KaitaiStream): float32 =
+  ks.alignToByte()
   let native = readFloat32(ks.io)
   bigEndian32(addr result, addr native)
 
 proc readF8be*(ks: KaitaiStream): float64 =
+  ks.alignToByte()
   let native = readFloat64(ks.io)
   bigEndian64(addr result, addr native)
 
 proc readF4le*(ks: KaitaiStream): float32 =
+  ks.alignToByte()
   let native = readFloat32(ks.io)
   littleEndian32(addr result, addr native)
 
 proc readF8le*(ks: KaitaiStream): float64 =
+  ks.alignToByte()
   let native = readFloat64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Unaligned bit values
-proc alignToByte*(ks: KaitaiStream) =
-  ks.bitsLeft = 0
-  ks.bits = 0
-
 proc readBitsIntBe*(ks: KaitaiStream, n: int): uint64 =
   result = 0
 
@@ -190,11 +215,13 @@ proc readBitsIntLe*(ks: KaitaiStream, n: int): uint64 =
 
 # Byte arrays
 proc readBytes*(ks: KaitaiStream, n: int): seq[byte] =
+  ks.alignToByte()
   if n == 0: return
   result = newSeq[byte](n)
   doAssert ks.io.readData(addr(result[0]), n) == n
 
 proc readBytesFull*(ks: KaitaiStream): seq[byte] =
+  ks.alignToByte()
   const bufferSize = 1024
   var buffer {.noinit.}: array[bufferSize, byte]
   while true:
@@ -208,6 +235,7 @@ proc readBytesFull*(ks: KaitaiStream): seq[byte] =
 
 proc readBytesTerm*(ks: KaitaiStream; term: byte;
                     includeTerm, consumeTerm, eosError: bool): seq[byte] =
+  ks.alignToByte()
   while true:
     let c = readUint8(ks.io)
     if c == term:
@@ -220,6 +248,7 @@ proc readBytesTerm*(ks: KaitaiStream; term: byte;
 
 proc readBytesTermMulti*(ks: KaitaiStream; term: seq[byte];
                          includeTerm, consumeTerm, eosError: bool): seq[byte] =
+  ks.alignToByte()
   let unitSize = term.len
   var c = newSeq[byte](unitSize)
   while true:
