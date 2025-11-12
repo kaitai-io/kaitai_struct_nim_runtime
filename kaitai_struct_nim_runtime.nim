@@ -52,71 +52,71 @@ proc size*(ks: KaitaiStream): int =
 # Signed integer numbers
 proc readS1*(ks: KaitaiStream): int8 = readInt8(ks.io)
 
-proc readS2Be*(ks: KaitaiStream): int16 =
+proc readS2be*(ks: KaitaiStream): int16 =
   let native = readInt16(ks.io)
   bigEndian16(addr result, addr native)
 
-proc readS4Be*(ks: KaitaiStream): int32 =
+proc readS4be*(ks: KaitaiStream): int32 =
   let native = readInt32(ks.io)
   bigEndian32(addr result, addr native)
 
-proc readS8Be*(ks: KaitaiStream): int64 =
+proc readS8be*(ks: KaitaiStream): int64 =
   let native = readInt64(ks.io)
   bigEndian64(addr result, addr native)
 
-proc readS2Le*(ks: KaitaiStream): int16 =
+proc readS2le*(ks: KaitaiStream): int16 =
   let native = readInt16(ks.io)
   littleEndian16(addr result, addr native)
 
-proc readS4Le*(ks: KaitaiStream): int32 =
+proc readS4le*(ks: KaitaiStream): int32 =
   let native = readInt32(ks.io)
   littleEndian32(addr result, addr native)
 
-proc readS8Le*(ks: KaitaiStream): int64 =
+proc readS8le*(ks: KaitaiStream): int64 =
   let native = readInt64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Unsigned integer numbers
 proc readU1*(ks: KaitaiStream): uint8 = readUint8(ks.io)
 
-proc readU2Be*(ks: KaitaiStream): uint16 =
+proc readU2be*(ks: KaitaiStream): uint16 =
   let native = readUint16(ks.io)
   bigEndian16(addr result, addr native)
 
-proc readU4Be*(ks: KaitaiStream): uint32 =
+proc readU4be*(ks: KaitaiStream): uint32 =
   let native = readUint32(ks.io)
   bigEndian32(addr result, addr native)
 
-proc readU8Be*(ks: KaitaiStream): uint64 =
+proc readU8be*(ks: KaitaiStream): uint64 =
   let native = readUint64(ks.io)
   bigEndian64(addr result, addr native)
 
-proc readU2Le*(ks: KaitaiStream): uint16 =
+proc readU2le*(ks: KaitaiStream): uint16 =
   let native = readUint16(ks.io)
   littleEndian16(addr result, addr native)
 
-proc readU4Le*(ks: KaitaiStream): uint32 =
+proc readU4le*(ks: KaitaiStream): uint32 =
   let native = readUint32(ks.io)
   littleEndian32(addr result, addr native)
 
-proc readU8Le*(ks: KaitaiStream): uint64 =
+proc readU8le*(ks: KaitaiStream): uint64 =
   let native = readUint64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Floating point numbers
-proc readF4Be*(ks: KaitaiStream): float32 =
+proc readF4be*(ks: KaitaiStream): float32 =
   let native = readFloat32(ks.io)
   bigEndian32(addr result, addr native)
 
-proc readF8Be*(ks: KaitaiStream): float64 =
+proc readF8be*(ks: KaitaiStream): float64 =
   let native = readFloat64(ks.io)
   bigEndian64(addr result, addr native)
 
-proc readF4Le*(ks: KaitaiStream): float32 =
+proc readF4le*(ks: KaitaiStream): float32 =
   let native = readFloat32(ks.io)
   littleEndian32(addr result, addr native)
 
-proc readF8Le*(ks: KaitaiStream): float64 =
+proc readF8le*(ks: KaitaiStream): float64 =
   let native = readFloat64(ks.io)
   littleEndian64(addr result, addr native)
 
