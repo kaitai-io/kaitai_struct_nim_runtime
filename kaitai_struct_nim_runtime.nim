@@ -65,32 +65,32 @@ proc readS1*(ks: KaitaiStream): int8 =
 
 proc readS2be*(ks: KaitaiStream): int16 =
   ks.alignToByte()
-  let native = readInt16(ks.io)
+  var native = readInt16(ks.io)
   bigEndian16(addr result, addr native)
 
 proc readS4be*(ks: KaitaiStream): int32 =
   ks.alignToByte()
-  let native = readInt32(ks.io)
+  var native = readInt32(ks.io)
   bigEndian32(addr result, addr native)
 
 proc readS8be*(ks: KaitaiStream): int64 =
   ks.alignToByte()
-  let native = readInt64(ks.io)
+  var native = readInt64(ks.io)
   bigEndian64(addr result, addr native)
 
 proc readS2le*(ks: KaitaiStream): int16 =
   ks.alignToByte()
-  let native = readInt16(ks.io)
+  var native = readInt16(ks.io)
   littleEndian16(addr result, addr native)
 
 proc readS4le*(ks: KaitaiStream): int32 =
   ks.alignToByte()
-  let native = readInt32(ks.io)
+  var native = readInt32(ks.io)
   littleEndian32(addr result, addr native)
 
 proc readS8le*(ks: KaitaiStream): int64 =
   ks.alignToByte()
-  let native = readInt64(ks.io)
+  var native = readInt64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Unsigned integer numbers
@@ -100,53 +100,53 @@ proc readU1*(ks: KaitaiStream): uint8 =
 
 proc readU2be*(ks: KaitaiStream): uint16 =
   ks.alignToByte()
-  let native = readUint16(ks.io)
+  var native = readUint16(ks.io)
   bigEndian16(addr result, addr native)
 
 proc readU4be*(ks: KaitaiStream): uint32 =
   ks.alignToByte()
-  let native = readUint32(ks.io)
+  var native = readUint32(ks.io)
   bigEndian32(addr result, addr native)
 
 proc readU8be*(ks: KaitaiStream): uint64 =
   ks.alignToByte()
-  let native = readUint64(ks.io)
+  var native = readUint64(ks.io)
   bigEndian64(addr result, addr native)
 
 proc readU2le*(ks: KaitaiStream): uint16 =
   ks.alignToByte()
-  let native = readUint16(ks.io)
+  var native = readUint16(ks.io)
   littleEndian16(addr result, addr native)
 
 proc readU4le*(ks: KaitaiStream): uint32 =
   ks.alignToByte()
-  let native = readUint32(ks.io)
+  var native = readUint32(ks.io)
   littleEndian32(addr result, addr native)
 
 proc readU8le*(ks: KaitaiStream): uint64 =
   ks.alignToByte()
-  let native = readUint64(ks.io)
+  var native = readUint64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Floating point numbers
 proc readF4be*(ks: KaitaiStream): float32 =
   ks.alignToByte()
-  let native = readFloat32(ks.io)
+  var native = readFloat32(ks.io)
   bigEndian32(addr result, addr native)
 
 proc readF8be*(ks: KaitaiStream): float64 =
   ks.alignToByte()
-  let native = readFloat64(ks.io)
+  var native = readFloat64(ks.io)
   bigEndian64(addr result, addr native)
 
 proc readF4le*(ks: KaitaiStream): float32 =
   ks.alignToByte()
-  let native = readFloat32(ks.io)
+  var native = readFloat32(ks.io)
   littleEndian32(addr result, addr native)
 
 proc readF8le*(ks: KaitaiStream): float64 =
   ks.alignToByte()
-  let native = readFloat64(ks.io)
+  var native = readFloat64(ks.io)
   littleEndian64(addr result, addr native)
 
 # Unaligned bit values
